@@ -34,16 +34,30 @@ JS = r'''() => {
   const rules = []; const keep = [];
   const splitSel = s => { const out = []; let d = 0, cur = ''; for (const ch of s) { if (ch === '(' ) d++; if (ch === ')') d--; if (ch === ',' && !d) { out.push(cur.trim()); cur = ''; } else cur += ch; } out.push(cur.trim()); return out; };
   const walk = (list, media) => { for (const r of list) {
-    if (r.type === 1) { grab(r.style);
-      if (/^(:root|html|body|#product-page-v8)$/.test(r.selectorText.trim()) === false || true) rules.push([media, r.selectorText, r.style.cssText]);
+    if (r.type === 1) {
+      if (!media) grab(r.style);
+      else { const ov = {}; for (let i = 0; i < r.style.length; i++) { const p = r.style[i]; if (p.startsWith('--')) ov[p] = r.style.getPropertyValue(p).trim(); }
+        if (Object.keys(ov).length) rules.push(['@override', media, ov]); }
+      rules.push([media, r.selectorText, r.style.cssText]);
     } else if (r.type === 4) walk(r.cssRules, r.conditionText || r.media.mediaText);
     else if (r.type === 7 || r.type === 12) keep.push(r.cssText);
   } };
   for (const s of document.styleSheets) { try { walk(s.cssRules, ''); } catch (e) {} }
   for (const r of inlineRules) rules.push(r);
-  const resolve = v => { for (let k = 0; k < 8 && v.includes('var('); k++)
-    v = v.replace(/var\(\s*(--[\w-]+)\s*(?:,\s*([^()]*(?:\([^()]*\)[^()]*)*))?\)/g, (m, name, fb) => vars[name] !== undefined ? vars[name] : (fb !== undefined ? fb.trim() : 'initial')); return v; };
+  const resolve = (v, V = vars) => { for (let k = 0; k < 8 && v.includes('var('); k++)
+    v = v.replace(/var\(\s*(--[\w-]+)\s*(?:,\s*([^()]*(?:\([^()]*\)[^()]*)*))?\)/g, (m, name, fb) => V[name] !== undefined ? V[name] : (fb !== undefined ? fb.trim() : 'initial')); return v; };
   for (const k in vars) vars[k] = resolve(vars[k]);
+  // variabili ridefinite dentro un @media: rigenera in quel media le dichiarazioni base che le usano
+  const expanded = [];
+  for (const r of rules) {
+    if (r[0] !== '@override') { expanded.push(r); continue; }
+    const [, media, ov] = r; const V = Object.assign({}, vars);
+    for (const k in ov) V[k] = resolve(ov[k], Object.assign({}, vars, ov));
+    for (const b of rules) { if (b[0] !== '') continue;
+      const decl = b[2].split(';').filter(d => !d.trim().startsWith('--') && Object.keys(ov).some(k => d.includes('var(' + k)));
+      if (decl.length) expanded.push([media, b[1], resolve(decl.join(';'), V)]); }
+  }
+  rules.length = 0; rules.push(...expanded);
   // 3) un solo blocco per (media, selettore)
   const map = new Map(); const tmp = document.createElement('div');
   const mapSel = s => s.replace(/^(html\s+)?body(?=[\s.:#\[>~+]|$)/, '.pp-root').replace(/#product-page-v8/g, '.pp-root');
