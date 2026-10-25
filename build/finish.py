@@ -7,6 +7,8 @@ for l in ('uk','de'):
     c=re.sub(r'--wp--[\w-]+:[^;}]*;?','',c)
     c=re.sub(r'[^{}]*{\s*}','',c)          # regole vuote
     c=re.sub(r'\s+',' ',c); c=re.sub(r'\s*([{};:,>])\s*',r'\1',c); c=c.replace(';}','}')
+    c+='@media(min-width:769px){html body .floater{display:none!important}}'
+    if l=='de': c=c.replace('text-transform:capitalize','text-transform:none')
     m=json.load(open(f'{R}/tmp/{l}.meta')); b=open(f'{R}/tmp/{l}.body').read()
     b=re.sub(r'^<body[^>]*>|</body>$','',b.strip())
     b=re.sub(r'\s+decoding="async"','',b); b=re.sub(r'>\s+<','><',b); b=re.sub(r'\s+',' ',b)

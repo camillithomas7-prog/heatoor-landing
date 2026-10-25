@@ -46,6 +46,10 @@ def build(lang):
           "m.classList.remove('navigation__opacity');m.classList.toggle('navigation--mobile-enabled',!o);m.classList.toggle('navigation--mobile-disabled',o);m.style.height=o?'0':(m.scrollHeight+1)+'px'")
     for a in body.select('.navigation-link--mobile'):
         a['onclick']="document.getElementById('header__menuBtn').click()"
+    for h in body.select('.footer__heading'):
+        h['onclick']=("if(window.innerWidth>767)return;var l=this.closest('div'),u=l.querySelector('ul'),c=l.querySelector('.footer__chevron'),o=u.getAttribute('expanded')=='true';"
+          "u.setAttribute('expanded',o?'false':'true');u.style.height=o?'0px':u.scrollHeight+'px';u.style.marginBottom=o?'0px':'25px';u.style.marginTop=o?'0px':'-9px';if(c)c.style.transform=o?'rotate(-90deg)':'rotate(0deg)'")
+        h['style']='cursor:pointer'
     fl=body.find('section',class_='floater')
     if fl: fl['class']=fl.get('class',[])+['is-visible']
     html=str(body)
