@@ -66,18 +66,11 @@ JS = r'''() => {
     const V = Object.assign({}, vars); for (const k in own) V[k] = resolve(own[k], Object.assign({}, vars, own));
     const clean = resolve(css, V).split(';').filter(d => d.trim() && !d.trim().startsWith('--')).join(';');
     if (!clean.trim()) continue;
-    for (let sel of splitSel(selText)) {
-      if (/^(:root|::backdrop)$/.test(sel)) continue;
-      sel = mapSel(sel);
-      const key = media + '|' + sel; const prev = map.get(key);
-      tmp.style.cssText = prev ? prev.css : '';
-      const s2 = document.createElement('div').style; s2.cssText = clean;
-      for (let i = 0; i < s2.length; i++) { const p = s2[i];
-        if (tmp.style.getPropertyPriority(p) === 'important' && s2.getPropertyPriority(p) !== 'important') continue;
-        tmp.style.setProperty(p, s2.getPropertyValue(p), s2.getPropertyPriority(p)); }
-      if (prev) map.delete(key);
-      map.set(key, { media, sel, css: tmp.style.cssText });
-    }
+    // CSS esterno: CC lo importa senza rielaborarlo, quindi niente fusione dei selettori
+    // (fonderli cambiava l'ordine della cascata); una regola per occorrenza, ordine originale
+    const sels = splitSel(selText).filter(x => !/^(:root|::backdrop)$/.test(x)).map(mapSel);
+    if (!sels.length) continue;
+    map.set(map.size, { media, sel: sels.join(','), css: clean });
   }
   // 4) serializza: blocchi consecutivi con stesso media nello stesso @media
   let out = keep.filter(t => t.startsWith('@keyframes')).join('\n') + '\n'; let cur = null;
