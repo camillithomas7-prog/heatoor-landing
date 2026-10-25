@@ -46,7 +46,7 @@ def hero_shade(css):
             hero.append([k, v])
         out = '.hero{' + ';'.join(f'{k}:{v}' for k, v in hero) + '}'
         if shade:
-            out += '.hero__shade{' + ';'.join(f'{k}:{v}' for k, v in shade) + '}'
+            out += '.hero__shade::before{' + ';'.join(f'{k}:{v}' for k, v in shade) + '}'
         return out
     return re.sub(r'(?<=[{}])(\.hero)\{([^{}]*)\}', fix, css)
 
@@ -56,7 +56,9 @@ def run(lang):
     html = open(path).read()
     css = re.search(r'<style>(.*)</style>', html, re.S).group(1)
     css = hero_shade('}' + css)[1:]
-    css += ('.hero__shade{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:0;background-repeat:no-repeat}'
+    # gli sfondi stanno su ::before: CC copia lo sfondo degli elementi in uno style inline (lazy) e batte i @media
+    css += ('.hero__shade{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:0}'
+            '.hero__shade::before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;background-repeat:no-repeat}'
             '.hero__container{position:relative;z-index:1}')
     # CC mette la prima immagine di sfondo della sezione come style inline (lazy) e batte i @media:
     # l'immagine hero diventa <img> vere, la sezione resta senza background-image
@@ -92,7 +94,8 @@ def run(lang):
                 sp = s.new_tag('span', attrs={'class': img.get('class', []) + [cls]})
                 img.replace_with(sp); used[cls] = (img['src'].rsplit('/', 1)[0] + '/' + fn, w, h)
     for cls, (url, w, h) in used.items():
-        css += f'.{cls}{{display:inline-block;flex:none;width:{w}px;height:{h}px;background:url("{url}") center/contain no-repeat}}'
+        css += (f'.{cls}{{display:inline-block;flex:none;width:{w}px;height:{h}px}}'
+                f'.{cls}::before{{content:"";display:block;width:100%;height:100%;background:url("{url}") center/contain no-repeat}}')
     btn0 = s.select_one('.header__menuBtn')
     lines = btn0.select('svg path') if btn0 else []
     for el in lines:
