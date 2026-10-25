@@ -7,6 +7,7 @@ for lang in sys.argv[1:] or ['uk', 'de']:
     m = re.search(r'<style>(.*)</style>', h, re.S)
     if not m: continue
     open(f'{ROOT}/{lang}/style.css', 'w').write(m.group(1))
-    h = h.replace(m.group(0), f'<link rel="stylesheet" href="{BASE}{lang}/style.css">')
+    import hashlib; v = hashlib.md5(m.group(1).encode()).hexdigest()[:8]
+    h = h.replace(m.group(0), f'<link rel="stylesheet" href="{BASE}{lang}/style.css?v={v}">')
     open(p, 'w').write(h)
     print(lang, 'html', len(h), 'css', len(m.group(1)))

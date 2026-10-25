@@ -61,9 +61,16 @@ def run(lang):
     s = BeautifulSoup(html, 'html.parser')
     hero = s.select_one('section.hero')
     shade = s.new_tag('div', attrs={'class': 'hero__shade'}); hero.insert(0, shade)
+    # icone piccole -> span con sfondo CSS (l'importer CC a volte mette il segnaposto sulle <img>)
+    ICONS = {'ui-thunder-icon.svg': ('ico-thunder', 'thunder.png', 20, 20), 'ui-footer_arrow.svg': ('ico-arrow', 'ui-footer_arrow.svg', 14, 8)}
+    used = {}
     for img in s.find_all('img'):
-        if 'thunder-icon' in img.get('src', ''):
-            img['src'] = img['src'].replace('ui-thunder-icon.svg', 'thunder.png')
+        for key, (cls, fn, w, h) in ICONS.items():
+            if img.get('src', '').endswith(key):
+                sp = s.new_tag('span', attrs={'class': img.get('class', []) + [cls]})
+                img.replace_with(sp); used[cls] = (img['src'].rsplit('/', 1)[0] + '/' + fn, w, h)
+    for cls, (url, w, h) in used.items():
+        css += f'.{cls}{{display:inline-block;flex:none;width:{w}px;height:{h}px;background:url("{url}") center/contain no-repeat}}'
     btn0 = s.select_one('.header__menuBtn')
     lines = btn0.select('svg path') if btn0 else []
     for el in lines:
