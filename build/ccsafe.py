@@ -58,9 +58,31 @@ def run(lang):
     css = hero_shade('}' + css)[1:]
     css += ('.hero__shade{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:0;background-repeat:no-repeat}'
             '.hero__container{position:relative;z-index:1}')
+    # CC mette la prima immagine di sfondo della sezione come style inline (lazy) e batte i @media:
+    # l'immagine hero diventa <img> vere, la sezione resta senza background-image
+    hero_imgs = {}
+    def strip_bg(m):
+        body = m.group(2)
+        u = re.search(r'background-image:\s*url\(\"?([^")]+)\"?\)', body)
+        if u: hero_imgs.setdefault(u.group(1), True)
+        body = re.sub(r'background-(image|position|size|repeat|position-x|position-y):[^;]*;?', '', body)
+        return m.group(1) + '.hero{' + body + '}'
+    css = re.sub(r'(^|[{}])\.hero\{([^{}]*)\}()', strip_bg, css)
+    urls = list(hero_imgs)
+    desk = [u for u in urls if 'ZGVza3RvcF' in u and 'h_900' in u][0]
+    mob = [u for u in urls if 'bW9iaWxl' in u][0]
+    css += ('.hero__img{position:absolute;left:0;z-index:0;pointer-events:none;display:block;max-width:none}'
+            '.hero__img--d{top:0;width:100%;height:100%;object-fit:cover;object-position:100% 50%}'
+            '.hero__img--m{display:none}'
+            '@media screen and (max-width:992px) and (min-width:769px){.hero__img--d{top:194px;height:auto}}'
+            '@media screen and (max-width:768px){.hero__img--d{display:none}.hero__img--m{display:block;top:140px;width:100%;height:auto}}')
+    for bp, y in ((650, 150), (550, 165), (510, 215), (471, 270), (460, 132), (340, 152)):
+        css += f'@media screen and (max-width:{bp}px){{.hero__img--m{{top:{y}px}}}}'
     s = BeautifulSoup(html, 'html.parser')
     hero = s.select_one('section.hero')
     shade = s.new_tag('div', attrs={'class': 'hero__shade'}); hero.insert(0, shade)
+    hero.insert(0, s.new_tag('img', attrs={'class': 'hero__img hero__img--m', 'src': mob, 'alt': ''}))
+    hero.insert(0, s.new_tag('img', attrs={'class': 'hero__img hero__img--d', 'src': desk, 'alt': ''}))
     # icone piccole -> span con sfondo CSS (l'importer CC a volte mette il segnaposto sulle <img>)
     ICONS = {'ui-thunder-icon.svg': ('ico-thunder', 'thunder.png', 20, 20), 'ui-footer_arrow.svg': ('ico-arrow', 'ui-footer_arrow.svg', 14, 8)}
     used = {}
