@@ -63,7 +63,7 @@ def run(lang):
     hero_imgs = {}
     def strip_bg(m):
         body = m.group(2)
-        u = re.search(r'background-image:\s*url\(\"?([^")]+)\"?\)', body)
+        u = re.search(r'background-image:\s*url\(["\']?([^"\')]+)["\']?\)', body)
         if u: hero_imgs.setdefault(u.group(1), True)
         body = re.sub(r'background-(image|position|size|repeat|position-x|position-y):[^;]*;?', '', body)
         return m.group(1) + '.hero{' + body + '}'
