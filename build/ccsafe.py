@@ -85,17 +85,21 @@ def run(lang):
     shade = s.new_tag('div', attrs={'class': 'hero__shade'}); hero.insert(0, shade)
     hero.insert(0, s.new_tag('img', attrs={'class': 'hero__img hero__img--m', 'src': mob, 'alt': ''}))
     hero.insert(0, s.new_tag('img', attrs={'class': 'hero__img hero__img--d', 'src': desk, 'alt': ''}))
-    # icone piccole -> span con sfondo CSS (l'importer CC a volte mette il segnaposto sulle <img>)
-    ICONS = {'ui-thunder-icon.svg': ('ico-thunder', 'thunder-2.png', 20, 20), 'ui-footer_arrow.svg': ('ico-arrow', 'ui-footer_arrow.svg', 14, 8)}
-    used = {}
+    # icone piccole -> SVG inline (CC: segnaposto sulle <img>, classi perse sugli span, sfondi resi inline)
+    def inline_svg(fn, fill):
+        svg = open(f'{ROOT}/assets/{fn}').read()
+        svg = re.sub(r'<defs>.*?</defs>', '', svg, flags=re.S)
+        svg = re.sub(r'</?g[^>]*>', '', svg)
+        svg = re.sub(r'fill="url\([^)]*\)"', f'fill="{fill}"', svg)
+        return re.sub(r'\s+', ' ', svg).strip()
+    ICONS = {'ui-thunder-icon.svg': inline_svg('ui-thunder-icon.svg', '#FE8A00'),
+             'ui-footer_arrow.svg': inline_svg('ui-footer_arrow.svg', 'white')}
     for img in s.find_all('img'):
-        for key, (cls, fn, w, h) in ICONS.items():
+        for key, svg in ICONS.items():
             if img.get('src', '').endswith(key):
-                sp = s.new_tag('span', attrs={'class': img.get('class', []) + [cls]})
-                img.replace_with(sp); used[cls] = (img['src'].rsplit('/', 1)[0] + '/' + fn, w, h)
-    for cls, (url, w, h) in used.items():
-        css += (f'.{cls}{{display:inline-block;flex:none;width:{w}px;height:{h}px}}'
-                f'.{cls}::before{{content:"";display:block;width:100%;height:100%;background:url("{url}") center/contain no-repeat}}')
+                el = BeautifulSoup(svg, 'html.parser').svg
+                el['class'] = img.get('class', []); el['style'] = 'flex:none'
+                img.replace_with(el)
     btn0 = s.select_one('.header__menuBtn')
     lines = btn0.select('svg path') if btn0 else []
     for el in lines:
