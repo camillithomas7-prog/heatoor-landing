@@ -84,7 +84,7 @@ def run(lang):
     hero.insert(0, s.new_tag('img', attrs={'class': 'hero__img hero__img--m', 'src': mob, 'alt': ''}))
     hero.insert(0, s.new_tag('img', attrs={'class': 'hero__img hero__img--d', 'src': desk, 'alt': ''}))
     # icone piccole -> span con sfondo CSS (l'importer CC a volte mette il segnaposto sulle <img>)
-    ICONS = {'ui-thunder-icon.svg': ('ico-thunder', 'thunder.png', 20, 20), 'ui-footer_arrow.svg': ('ico-arrow', 'ui-footer_arrow.svg', 14, 8)}
+    ICONS = {'ui-thunder-icon.svg': ('ico-thunder', 'thunder-2.png', 20, 20), 'ui-footer_arrow.svg': ('ico-arrow', 'ui-footer_arrow.svg', 14, 8)}
     used = {}
     for img in s.find_all('img'):
         for key, (cls, fn, w, h) in ICONS.items():
