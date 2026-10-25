@@ -62,7 +62,9 @@ JS = r'''() => {
   const map = new Map(); const tmp = document.createElement('div');
   const mapSel = s => s.replace(/^(html\s+)?body(?=[\s.:#\[>~+]|$)/, '.pp-root').replace(/#product-page-v8/g, '.pp-root');
   for (const [media, selText, css] of rules) {
-    const clean = resolve(css).split(';').filter(d => d.trim() && !d.trim().startsWith('--')).join(';');
+    const own = {}; css.split(';').forEach(d => { const m = d.match(/^\s*(--[\w-]+)\s*:\s*(.*)$/); if (m) own[m[1]] = m[2].trim(); });
+    const V = Object.assign({}, vars); for (const k in own) V[k] = resolve(own[k], Object.assign({}, vars, own));
+    const clean = resolve(css, V).split(';').filter(d => d.trim() && !d.trim().startsWith('--')).join(';');
     if (!clean.trim()) continue;
     for (let sel of splitSel(selText)) {
       if (/^(:root|::backdrop)$/.test(sel)) continue;
